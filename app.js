@@ -28,52 +28,22 @@ function actualizarEstadisticas() {
 }
 
 // --- RENDERIZADO ACTUALIZADO ---
-function render() {
-    const list = document.getElementById('lista-misiones');
-    const busqueda = document.getElementById('filtro-texto').value.toLowerCase();
-    const filtroEstado = document.getElementById('filtro-estado').value;
-    list.innerHTML = '';
-
-    misiones.forEach(m => {
-        const cumpleFiltros = rangosActivos.has(m.rango) && 
-                            categoriasActivas.has(m.categoria) && 
-                            m.texto.toLowerCase().includes(busqueda);
+window.editarMision = (id) => {
+    const mision = misiones.find(m => m.id === id);
+    if (mision) {
+        // Cargamos los datos en el formulario
+        document.getElementById('input-mision').value = mision.texto;
+        document.getElementById('select-categoria').value = mision.categoria;
+        document.getElementById('select-rango').value = mision.rango;
         
-        const cumpleEstado = filtroEstado === 'todas' || 
-                            (filtroEstado === 'completadas' && m.completada) || 
-                            (filtroEstado === 'pendientes' && !m.completada);
-
-        if (cumpleFiltros && cumpleEstado) {
-            const el = document.createElement('div');
-            
-            // Estilo dinámico si está completada
-            const clasesCompletada = m.completada 
-                ? 'opacity-60 grayscale-[0.5] border-stone-300 dark:border-stone-700 bg-stone-100 dark:bg-zinc-800/50' 
-                : 'bg-white dark:bg-zinc-800 border-stone-200 dark:border-stone-700 ring-1 ring-gold/20';
-
-            el.className = `p-5 border relative hover:scale-[1.01] transition-all duration-300 flex justify-between items-center group overflow-hidden ${clasesCompletada}`;
-            
-            el.innerHTML = `
-                <div class="relative z-10 ${m.completada ? 'line-through decoration-gold' : ''}">
-                    <span class="font-pixel text-[8px] text-gold dark:text-gold/80 uppercase tracking-tighter">${m.categoria} | RANGO ${m.rango}</span>
-                    <p class="text-lg font-bold text-stone-800 dark:text-stone-100 mt-1">${m.texto}</p>
-                </div>
-                <div class="flex gap-2 relative z-20">
-                    <button onclick="toggleMision(${m.id})" 
-                        class="px-3 py-2 border border-gold text-gold hover:bg-gold hover:text-white transition-all font-pixel text-[8px]">
-                        ${m.completada ? '↩' : '✓'}
-                    </button>
-                    <button onclick="eliminar(${m.id})" 
-                        class="bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white px-3 py-2 font-pixel text-[8px] transition-all">
-                        X
-                    </button>
-                </div>
-            `;
-            list.appendChild(el);
-        }
-    });
-    actualizarEstadisticas();
-}
+        // Eliminamos la antigua para "re-publicarla" editada
+        misiones = misiones.filter(m => m.id !== id);
+        guardarYRender();
+        
+        // Hacemos scroll hacia arriba para que Niko vea el formulario
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+};
 
 // --- ACCIONES ---
 document.getElementById('form-mision').onsubmit = (e) => {
@@ -142,4 +112,5 @@ function init() {
 
 document.getElementById('filtro-texto').oninput = render;
 document.getElementById('filtro-estado').onchange = render;
+
 document.addEventListener('DOMContentLoaded', init);
