@@ -165,6 +165,12 @@ window.editarMision = (id) => {
     }
 };
 
+window.ordenarPorPrioridad = () => {
+    const orden = { 'S': 5, 'A': 4, 'B': 3, 'C': 2, 'D': 1 };
+    listaMisiones.sort((a, b) => orden[b.rango] - orden[a.rango]);
+    guardarYRender();
+};
+
 // --- 5. CONFIGURACIÓN DE FILTROS E INICIALIZACIÓN ---
 
 function setupFiltros() {
