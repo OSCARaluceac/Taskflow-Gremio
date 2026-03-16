@@ -143,3 +143,60 @@ function init() {
 document.getElementById('filtro-texto').oninput = render;
 document.getElementById('filtro-estado').onchange = render;
 document.addEventListener('DOMContentLoaded', init);
+
+// Función para formatear la fecha de la misión en un formato legible para el usuario
+function formatearFecha(fecha) {
+    const fechaObj = new Date(fecha);
+    const dia = fechaObj.getDate().toString().padStart(2, '0');
+    const mes = (fechaObj.getMonth() + 1).toString().padStart(2, '0');
+    const anio = fechaObj.getFullYear();
+    return `${dia}/${mes}/${anio}`;
+}
+// Barra de progreso de misiones logradas
+
+function actualizarBarraProgreso() {
+    // Calcula el porcentaje de misiones completadas
+    const total = misiones.length;
+    const completadas = misiones.filter(m => m.estado === 'completada').length;
+    const porcentaje = total === 0 ? 0 : Math.round((completadas / total) * 100);
+
+    // Crea o actualiza la barra de progreso
+    let cont = document.getElementById('progreso-logro-container');
+    if (!cont) {
+        // Creamos el contenedor al final de stats-container
+        const stats = document.getElementById('stats-container');
+        cont = document.createElement('div');
+        cont.id = 'progreso-logro-container';
+        cont.className = 'mt-5';
+        cont.innerHTML = `
+            <div class="font-pixel text-[8px] mb-2 uppercase text-stone-500 dark:text-stone-400 flex justify-between items-center">
+                <span>Progreso General</span>
+                <span id="progreso-logro-text"></span>
+            </div>
+            <div class="w-full h-4 bg-parchment dark:bg-zinc-800 rounded overflow-hidden border border-gold/40">
+                <div id="progreso-logro-barra"
+                    class="h-full transition-all duration-500 bg-gold"
+                    style="width: 0%">
+                </div>
+            </div>
+        `;
+        stats.appendChild(cont);
+    }
+
+    // Actualiza porcentaje visual y texto
+    const texto = document.getElementById('progreso-logro-text');
+    if (texto) {
+        texto.textContent = `${porcentaje}% (${completadas}/${total})`;
+    }
+    const barra = document.getElementById('progreso-logro-barra');
+    if (barra) {
+        barra.style.width = porcentaje + '%';
+    }
+}
+
+// Llama a la barra de progreso después del render y en la carga inicial
+const _renderBase = render;
+render = function() {
+    _renderBase();
+    actualizarBarraProgreso();
+};
