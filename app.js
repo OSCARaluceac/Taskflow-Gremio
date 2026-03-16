@@ -52,25 +52,29 @@ function render() {
 function crearMisionElemento(mision) {
     const el = document.createElement('div');
     const clasesCompletada = mision.completada 
-        ? 'opacity-60 grayscale-[0.5] border-stone-300 dark:border-stone-700 bg-stone-100 dark:bg-zinc-800/50' 
+        ? 'opacity-60 grayscale-[0.5] border-stone-400 dark:border-stone-700 bg-stone-100 dark:bg-zinc-800/50' 
         : 'bg-white dark:bg-zinc-800 border-stone-200 dark:border-stone-700 ring-1 ring-gold/20';
 
-    el.className = `p-5 border relative hover:scale-[1.01] transition-all duration-300 flex justify-between items-center group overflow-hidden ${clasesCompletada}`;
+    // Eliminamos 'overflow-hidden' temporalmente para asegurar que nada se corte
+    el.className = `p-5 border relative hover:scale-[1.01] transition-all duration-300 flex justify-between items-center group ${clasesCompletada}`;
+    
     el.innerHTML = `
-        <div class="relative z-10 ${mision.completada ? 'line-through decoration-gold' : ''}">
+        <div class="relative z-10 flex-1 ${mision.completada ? 'line-through decoration-gold' : ''}">
             <span class="font-pixel text-[8px] text-gold dark:text-gold/80 uppercase tracking-tighter">
                 ${mision.categoria} | RANGO ${mision.rango} | ${mision.fecha}
             </span>
             <p class="text-lg font-bold text-stone-800 dark:text-stone-100 mt-1">${mision.texto}</p>
         </div>
-        <div class="flex gap-2 relative z-20">
-            <button onclick="toggleMision(${mision.id})" class="px-3 py-2 border border-gold text-gold hover:bg-gold hover:text-white transition-all font-pixel text-[8px]">
+        <div class="flex gap-2 relative z-20 ml-4">
+            <button onclick="window.toggleMision(${mision.id})" class="px-3 py-2 border border-gold text-gold hover:bg-gold hover:text-white transition-all font-pixel text-[8px]">
                 ${mision.completada ? '↩' : '✓'}
             </button>
-            <button onclick="editarMision(${mision.id})" class="px-3 py-2 border border-stone-300 text-stone-600 hover:bg-stone-200 hover:text-stone-900 transition-all font-pixel text-[8px]">
-                ✎
+            
+            <button onclick="window.editarMision(${mision.id})" class="px-3 py-2 border border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-white transition-all font-pixel text-[8px] bg-white dark:bg-zinc-900">
+                EDIT
             </button>
-            <button onclick="eliminarMision(${mision.id})" class="bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white px-3 py-2 font-pixel text-[8px] transition-all">
+            
+            <button onclick="window.eliminarMision(${mision.id})" class="bg-red-500/10 text-red-500 border border-red-500 hover:bg-red-500 hover:text-white px-3 py-2 font-pixel text-[8px] transition-all">
                 X
             </button>
         </div>
@@ -201,7 +205,7 @@ function setupFiltros() {
 
 function actualizarEstiloFiltro(btn, activo, tipo) {
     if (tipo === 'rango') {
-        btn.className = `w-10 h-10 font-pixel text-[10px] border transition-all duration-300 ${activo ? 'bg-wood text-white dark:bg-gold border-wood dark:border-gold' : 'text-stone-400 border-stone-300 dark:border-stone-700'}`;
+        btn.className = `w-10 h-10 font-pixel text-[10px] border transition-all duration-300 ${activo ? 'bg-wood text-white dark:bg-gold border-wood dark:border-gold' : 'text-stone-400 border-stone-400 dark:border-stone-700'}`;
     } else {
         btn.className = `text-left p-2 font-pixel text-[9px] transition-all duration-300 border-l-4 ${activo ? 'border-gold text-stone-800 dark:text-stone-100 bg-gold/5' : 'border-transparent text-stone-400 opacity-50'}`;
     }
