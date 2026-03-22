@@ -53,18 +53,21 @@ async function agregarMision(title, categoria, rango) {
     }
 }
 
+// ACTUALIZACIÓN NECESARIA: Persistencia del toggle
 window.toggleMision = async (id) => {
     const mision = listaMisiones.find(m => m.id === id);
     if (!mision) return;
 
+    const nuevoEstado = !mision.completed;
     toggleLoading(true);
+    
     try {
-        // En la Fase 3, enviamos el cambio al servidor (aquí simulamos con el array)
-        // Nota: Si implementaste PATCH en el backend, aquí harías await taskAPI.update(id, ...)
-        mision.completed = !mision.completed;
+        // Enviamos la actualización al servidor mediante PATCH
+        await taskAPI.updateStatus(id, nuevoEstado);
+        mision.completed = nuevoEstado;
         render();
     } catch (error) {
-        showErrorMessage("Error al actualizar el estado de la misión.");
+        showErrorMessage("Error al sincronizar el estado con el servidor.");
     } finally {
         toggleLoading(false);
     }
@@ -96,7 +99,6 @@ function render() {
 
     let misionesParaMostrar = [...listaMisiones]; 
     
-    // Ordenación
     if (ordenActivo) {
         const p = { 'S': 5, 'A': 4, 'B': 3, 'C': 2, 'D': 1 };
         misionesParaMostrar.sort((a, b) => (p[b.rango] || 0) - (p[a.rango] || 0));
@@ -104,7 +106,6 @@ function render() {
         misionesParaMostrar.sort((a, b) => b.id - a.id); 
     }
 
-    // Filtrado y Dibujado
     misionesParaMostrar.forEach(mision => {
         const cumpleFiltros = filtrosRango.has(mision.rango) && 
                               filtrosCategoria.has(mision.categoria);
