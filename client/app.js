@@ -238,6 +238,60 @@ formMision?.addEventListener('submit', async (e) => {
 document.getElementById('filtro-texto')?.addEventListener('input', render);
 document.getElementById('filtro-estado')?.addEventListener('change', render);
 
+// --- DRAWER MÓVIL ---
+const drawer = document.getElementById('filtros-drawer');
+const overlay = document.getElementById('drawer-overlay');
+const btnDrawer = document.getElementById('btn-drawer');
+
+function abrirDrawer() {
+    drawer?.classList.remove('-translate-x-full');
+    overlay?.classList.remove('hidden');
+    document.body.classList.add('overflow-hidden');
+}
+function cerrarDrawer() {
+    drawer?.classList.add('-translate-x-full');
+    overlay?.classList.add('hidden');
+    document.body.classList.remove('overflow-hidden');
+}
+
+btnDrawer?.addEventListener('click', abrirDrawer);
+overlay?.addEventListener('click', cerrarDrawer);
+
+// Cerrar drawer al seleccionar filtro en móvil
+drawer?.addEventListener('click', (e) => {
+    if (e.target.tagName === 'BUTTON' && window.innerWidth < 1024) {
+        setTimeout(cerrarDrawer, 150);
+    }
+});
+
+// --- MISIONES DE ÉLITE ---
+const MISIONES_ELITE = [
+    { title: "Cazar al Dragón Escarlata del Pico Eterno",    categoria: "Caza",       rango: "S" },
+    { title: "Escoltar a la Embajadora al Reino del Norte",  categoria: "Escolta",    rango: "A" },
+    { title: "Explorar las Ruinas Sumergidas de Valdris",    categoria: "Exploración", rango: "B" },
+    { title: "Recolectar Hongos de la Cueva Sombría",        categoria: "Recolección", rango: "C" },
+    { title: "Capturar al Bandido Conocido como La Sombra",  categoria: "Captura",    rango: "D" },
+];
+
+document.getElementById('btn-elite')?.addEventListener('click', async () => {
+    const btn = document.getElementById('btn-elite');
+    if (btn) {
+        btn.disabled = true;
+        btn.querySelector('span.relative.z-10').textContent = '⏳ Cargando...';
+    }
+    try {
+        for (const m of MISIONES_ELITE) {
+            await agregarMision(m.title, m.categoria, m.rango);
+        }
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.querySelector('span.relative.z-10').textContent = '⚔ Cargar Misiones de Élite';
+        }
+        if (window.innerWidth < 1024) cerrarDrawer();
+    }
+});
+
 document.addEventListener('DOMContentLoaded', () => {
     setupTheme();
     setupFiltros();

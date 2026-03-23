@@ -65,7 +65,7 @@
         }
     </style>
 </head>
-<body class="bg-parchment-light dark:bg-zinc-950 text-stone-800 dark:text-stone-200 font-serif transition-colors duration-500 min-h-screen p-4 flex justify-center">
+<body class="bg-parchment-light dark:bg-zinc-950 text-stone-800 dark:text-stone-200 font-serif transition-colors duration-500 min-h-screen px-4 py-6 2xl:py-10 flex justify-center items-start">
 
     <div id="loading-state" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm flex flex-col items-center justify-center z-[100]">
         <div class="loader-gremio mb-4"></div>
@@ -82,17 +82,34 @@
         </div>
     </div>
 
-    <div class="w-full max-w-7xl border-4 border-wood dark:border-stone-800 bg-parchment dark:bg-zinc-900 shadow-2xl relative transition-all duration-500">
+    <div class="w-full max-w-5xl 2xl:max-w-[1200px] border-4 border-wood dark:border-stone-800 bg-parchment dark:bg-zinc-900 shadow-2xl relative transition-all duration-500 ring-1 ring-wood/20 dark:ring-stone-700/40 ring-offset-2 ring-offset-parchment-light dark:ring-offset-zinc-950">
         
         <header class="border-b-2 border-gold/30 p-6 flex justify-between items-center bg-white/40 dark:bg-black/20">
             <h1 class="font-pixel text-[10px] md:text-xs text-wood dark:text-gold tracking-widest uppercase">TaskFlow // Gremio</h1>
-            <button id="theme-toggle" class="px-4 py-2 border-2 border-wood dark:border-gold hover:bg-gold hover:text-white dark:hover:bg-gold dark:hover:text-black transition-all duration-300 font-pixel text-[9px] hover:scale-105 active:scale-95 shadow-sm outline-none">
-                CAMBIAR MODO
-            </button>
+            <div class="flex items-center gap-3">
+                <!-- Botón Drawer: solo en móvil -->
+                <button id="btn-drawer" class="lg:hidden px-3 py-2 border-2 border-wood dark:border-gold hover:bg-gold/10 transition-all font-pixel text-[9px] text-wood dark:text-gold outline-none active:scale-95">
+                    ☰ FILTROS
+                </button>
+                <button id="theme-toggle" class="px-4 py-2 border-2 border-wood dark:border-gold hover:bg-gold hover:text-white dark:hover:bg-gold dark:hover:text-black transition-all duration-300 font-pixel text-[9px] hover:scale-105 active:scale-95 shadow-sm outline-none">
+                    CAMBIAR MODO
+                </button>
+            </div>
         </header>
 
+        <!-- Overlay oscuro para cerrar el drawer tocando fuera -->
+        <div id="drawer-overlay" class="fixed inset-0 bg-black/50 z-40 hidden lg:hidden backdrop-blur-sm transition-opacity duration-300"></div>
+
         <main class="grid grid-cols-1 lg:grid-cols-[1fr_1.618fr] min-h-[80vh]">
-            <aside class="p-8 border-r border-stone-200 dark:border-stone-800 bg-stone-50/30 dark:bg-black/10">
+            <!-- ASIDE: drawer en móvil, sidebar normal en lg+ -->
+            <aside id="filtros-drawer"
+                class="fixed top-0 left-0 h-full w-72 z-50 overflow-y-auto
+                       bg-parchment dark:bg-zinc-900 border-r-4 border-wood dark:border-stone-700
+                       p-8 shadow-2xl
+                       transform -translate-x-full transition-transform duration-300 ease-in-out
+                       lg:relative lg:top-auto lg:left-auto lg:h-auto lg:w-auto lg:z-auto
+                       lg:translate-x-0 lg:shadow-none lg:border-r lg:border-stone-200 lg:dark:border-stone-800
+                       lg:bg-stone-50/30 lg:dark:bg-black/10 lg:overflow-y-visible">
                 <section class="mb-10 p-4 border border-gold/20 bg-gold/5 rounded-sm">
                     <h3 class="font-pixel text-[9px] text-gold mb-4 uppercase">Estado del Gremio</h3>
                     <div id="stats-container" class="font-pixel text-[8px] space-y-3 text-stone-600 dark:text-stone-400"></div>
@@ -122,6 +139,24 @@
                     <h3 class="font-pixel text-[9px] text-stone-500 mb-4 uppercase">Categorías</h3>
                     <div id="filtro-categorias" class="flex flex-col gap-2"></div>
                 </section>
+
+                <!-- Botón Misiones de Élite -->
+                <section class="mt-10 pt-6 border-t-2 border-gold/30">
+                    <button id="btn-elite" 
+                        class="w-full p-4 border-2 border-gold bg-gold/5 dark:bg-gold/10
+                               font-pixel text-[8px] text-gold uppercase tracking-wider
+                               hover:bg-gold hover:text-white dark:hover:text-black
+                               active:scale-95 transition-all duration-300 shadow-md
+                               relative overflow-hidden group">
+                        <span class="relative z-10">⚔ Cargar Misiones de Élite</span>
+                        <span class="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent
+                                     translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></span>
+                    </button>
+                    <p class="font-pixel text-[7px] text-stone-400 dark:text-stone-600 mt-2 text-center leading-relaxed">
+                        ENCARGOS OFICIALES DEL GREMIO
+                    </p>
+                </section>
+
             </aside>
 
             <section class="p-8 bg-white/50 dark:bg-zinc-900/30">
