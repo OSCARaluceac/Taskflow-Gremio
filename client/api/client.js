@@ -29,7 +29,7 @@ export const taskAPI = {
                 title, 
                 categoria, 
                 rango,
-                priority: rango === 'S' ? 5 : 1 // Jerarquía de importancia
+                priority: rango === 'S' ? 5 : 1 
             })
         });
         if (!response.ok) throw new Error('No se pudo guardar la misión en el servidor.');
@@ -40,12 +40,13 @@ export const taskAPI = {
      * Actualiza el estado de cumplimiento de una misión (Fase 3).
      */
     async updateStatus(id, completed) {
-        const response = await fetch(`${API_URL}/${id}`, {
-            method: 'PATCH', // Actualización parcial del recurso
+        const response = await fetch(`${API_URL}/${id}`, { 
+            method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ completed })
         });
-        if (!response.ok) throw new Error('Fallo al actualizar el estado en el servidor.');
+        
+        if (!response.ok) throw new Error('Error al actualizar el estado.');
         return await response.json();
     },
 
