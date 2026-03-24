@@ -340,7 +340,7 @@ document.getElementById('btn-elite')?.addEventListener('click', async () => {
     } finally {
         if (btn) {
             btn.disabled = false;
-            btn.querySelector('span.relative.z-10').textContent = '⚔ Cargar Misiones de Élite';
+            btn.querySelector('span.relative.z-10').textContent = '⚔ Explorar Misiones';
         }
         if (window.innerWidth < 1024) cerrarDrawer();
     }
