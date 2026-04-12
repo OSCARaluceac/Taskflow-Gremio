@@ -41,3 +41,26 @@ app.use((err, req, res, next) => {
 app.listen(port, () => {
   console.log(`[SISTEMA]: Servidor operativo en el puerto ${port}`);
 });
+
+const swaggerUi = require('swagger-ui-express');
+const swaggerJsdoc = require('swagger-jsdoc');
+
+// Configuración de metadatos de Swagger
+const swaggerOptions = {
+    definition: {
+        openapi: '3.0.0',
+        info: {
+            title: 'TaskFlow API - Gremio de Niko',
+            version: '1.0.0',
+            description: 'Documentación técnica de la API de gestión de misiones.',
+        },
+        servers: [
+            { url: 'http://localhost:3000', description: 'Servidor Local' },
+            { url: 'https://taskflow-gremio.vercel.app', description: 'Servidor Producción' }
+        ],
+    },
+    apis: ['./server/src/routes/*.js'], // Indica dónde buscar las rutas para documentar
+};
+
+const swaggerDocs = swaggerJsdoc(swaggerOptions);
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
