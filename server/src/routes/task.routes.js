@@ -15,45 +15,31 @@ const taskController = require('../controllers/task.controller');
  * properties:
  * id:
  * type: string
- * description: ID único generado por el servidor.
+ * description: ID autogenerado.
  * title:
  * type: string
- * description: El nombre de la misión.
+ * description: Nombre de la misión.
  * categoria:
  * type: string
- * description: Tipo de misión (Caza, Escolta, etc.).
+ * description: Tipo de encargo.
  * rango:
  * type: string
- * description: Grado de dificultad (D, C, B, A, S).
+ * description: Dificultad (D-S).
  * completed:
  * type: boolean
- * description: Estado actual de la misión.
+ * description: Estado.
  */
 
 /**
  * @swagger
  * /api/v1/tasks:
  * get:
- * summary: Recuperar el tablón de misiones completo.
- * tags: [Misiones]
+ * summary: Obtener todas las misiones.
  * responses:
  * 200:
- * description: Lista de misiones obtenida con éxito.
- * content:
- * application/json:
- * schema:
- * type: array
- * items:
- * $ref: '#/components/schemas/Task'
- */
-router.get('/', taskController.getTasks);
-
-/**
- * @swagger
- * /api/v1/tasks:
+ * description: Lista recuperada.
  * post:
- * summary: Registrar una nueva misión en el Gremio.
- * tags: [Misiones]
+ * summary: Registrar una nueva misión.
  * requestBody:
  * required: true
  * content:
@@ -62,27 +48,23 @@ router.get('/', taskController.getTasks);
  * $ref: '#/components/schemas/Task'
  * responses:
  * 201:
- * description: Misión creada y registrada.
- * 400:
- * description: Datos de entrada inválidos.
+ * description: Creado.
  */
+router.get('/', taskController.getTasks);
 router.post('/', taskController.createTask);
 
 /**
  * @swagger
  * /api/v1/tasks/{id}:
  * patch:
- * summary: Actualizar el estado de una misión (Completada/Pendiente).
- * tags: [Misiones]
+ * summary: Alternar estado de completado.
  * parameters:
  * - in: path
  * name: id
  * required: true
  * schema:
  * type: string
- * description: ID de la misión a modificar.
  * requestBody:
- * required: true
  * content:
  * application/json:
  * schema:
@@ -92,31 +74,20 @@ router.post('/', taskController.createTask);
  * type: boolean
  * responses:
  * 200:
- * description: Estado actualizado correctamente.
- * 404:
- * description: Misión no encontrada.
- */
-router.patch('/:id', taskController.updateTaskStatus);
-
-/**
- * @swagger
- * /api/v1/tasks/{id}:
+ * description: Actualizado.
  * delete:
- * summary: Retirar una misión del tablón permanentemente.
- * tags: [Misiones]
+ * summary: Eliminar una misión.
  * parameters:
  * - in: path
  * name: id
  * required: true
  * schema:
  * type: string
- * description: ID de la misión a eliminar.
  * responses:
  * 204:
- * description: Misión eliminada con éxito.
- * 404:
- * description: El objetivo no existe en el registro.
+ * description: Eliminado.
  */
+router.patch('/:id', taskController.updateTaskStatus);
 router.delete('/:id', taskController.deleteTask);
 
 module.exports = router;
