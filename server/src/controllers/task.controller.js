@@ -12,10 +12,8 @@ const getTasks = (req, res) => {
  * Registra un nuevo contrato validando los parámetros del Gremio.
  */
 const createTask = (req, res) => {
-    // Extraemos todos los campos que envía el frontend
     const { title, categoria, rango, priority } = req.body;
 
-    // Validación defensiva estricta: No permitiremos datos corruptos
     if (!title || typeof title !== 'string' || title.trim().length < 3) {
         return res.status(400).json({ error: "El título es obligatorio (mínimo 3 caracteres)." });
     }
@@ -42,9 +40,8 @@ const updateTaskStatus = (req, res) => {
         const { id } = req.params;
         const { completed } = req.body;
 
-        // Validamos que el estado sea un booleano
         if (typeof completed !== 'boolean') {
-            return res.status(400).json({ error: "El estado debe ser booleano (true/false)." });
+            return res.status(400).json({ error: "El estado debe ser booleano." });
         }
 
         const updatedTask = taskService.updateStatus(id, completed);
