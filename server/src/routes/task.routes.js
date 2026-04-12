@@ -15,19 +15,19 @@ const taskController = require('../controllers/task.controller');
  * properties:
  * id:
  * type: string
- * description: ID autogenerado.
+ * description: ID único de la misión.
  * title:
  * type: string
- * description: Nombre de la misión.
+ * description: Nombre del encargo.
  * categoria:
  * type: string
- * description: Tipo de encargo.
+ * description: Tipo de misión.
  * rango:
  * type: string
- * description: Dificultad (D-S).
+ * description: Dificultad (D, C, B, A, S).
  * completed:
  * type: boolean
- * description: Estado.
+ * description: Estado de la misión.
  */
 
 /**
@@ -37,7 +37,7 @@ const taskController = require('../controllers/task.controller');
  * summary: Obtener todas las misiones.
  * responses:
  * 200:
- * description: Lista recuperada.
+ * description: Lista recuperada con éxito.
  * post:
  * summary: Registrar una nueva misión.
  * requestBody:
@@ -48,7 +48,7 @@ const taskController = require('../controllers/task.controller');
  * $ref: '#/components/schemas/Task'
  * responses:
  * 201:
- * description: Creado.
+ * description: Misión creada correctamente.
  */
 router.get('/', taskController.getTasks);
 router.post('/', taskController.createTask);
@@ -74,7 +74,7 @@ router.post('/', taskController.createTask);
  * type: boolean
  * responses:
  * 200:
- * description: Actualizado.
+ * description: Estado actualizado.
  * delete:
  * summary: Eliminar una misión.
  * parameters:
@@ -85,7 +85,7 @@ router.post('/', taskController.createTask);
  * type: string
  * responses:
  * 204:
- * description: Eliminado.
+ * description: Registro eliminado del tablón.
  */
 router.patch('/:id', taskController.updateTaskStatus);
 router.delete('/:id', taskController.deleteTask);
