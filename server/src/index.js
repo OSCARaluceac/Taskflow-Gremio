@@ -12,7 +12,7 @@ const swaggerOptions = {
     definition: {
         openapi: '3.0.0',
         info: {
-            title: 'TaskFlow API - Gremio de Niko',
+            title: 'TaskFlow API - Gremio de Aventureros',
             version: '1.0.0',
             description: 'Documentación técnica de la API de gestión de misiones.',
         },
@@ -49,7 +49,7 @@ app.use('/api/v1/tasks', taskRoutes);
 app.use((err, req, res, next) => {
     console.error(`[ERROR]: ${err.message}`);
     if (err.message === 'NOT_FOUND') {
-        return res.status(404).json({ error: "Recurso no encontrado, Niko." });
+        return res.status(404).json({ error: "Recurso no encontrado." });
     }
     res.status(500).json({ 
         error: "Error interno del servidor. Protocolo de emergencia activo." 
