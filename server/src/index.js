@@ -1,6 +1,6 @@
 const express = require('express');
 const cors = require('cors');
-const path = require('path'); // Sensor de rutas absolutas
+const path = require('path');
 const { port } = require('./config/env');
 const taskRoutes = require('./routes/task.routes');
 const swaggerUi = require('swagger-ui-express');
@@ -8,58 +8,40 @@ const swaggerJsdoc = require('swagger-jsdoc');
 
 const app = express();
 
-// --- 1. Configuración de Swagger (Protocolo de Red) ---
+// --- 1. CONFIGURACIÓN DE SWAGGER ---
 const swaggerOptions = {
     definition: {
         openapi: '3.0.0',
         info: {
             title: 'TaskFlow API - Gremio de Aventureros',
             version: '1.0.0',
-            description: 'Documentación técnica de la API de gestión de misiones.',
         },
         servers: [
-            { url: 'http://localhost:3000', description: 'Servidor Local' },
-            { url: 'https://taskflow-gremio.vercel.app', description: 'Servidor Producción' }
+            { url: 'http://localhost:3000', description: 'Local' },
+            { url: 'https://taskflow-gremio.vercel.app', description: 'Producción' }
         ],
     },
-    // Usamos path.join para evitar que Vercel pierda el rastro de los archivos
-    apis: [path.join(__dirname, './routes/*.js')], 
+    // 🔥 RUTA ABSOLUTA PARA EVITAR EL 404 EN VERCEL
+    apis: [path.join(process.cwd(), 'server/src/routes/*.js')], 
 };
 
 const swaggerDocs = swaggerJsdoc(swaggerOptions);
 
-// --- 2. Middlewares Globales ---
+// --- 2. MIDDLEWARES ---
 app.use(cors());
 app.use(express.json());
 
-// Middleware de Auditoría
-app.use((req, res, next) => {
-    const inicio = performance.now();
-    res.on('finish', () => { 
-        const duracion = performance.now() - inicio;
-        console.log(`[${req.method}] ${req.originalUrl} - Estado: ${res.statusCode} (${duracion.toFixed(2)}ms)`);
-    });
-    next();
-});
-
-// --- 3. Puntos de Entrada ---
+// --- 3. RUTAS ---
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 app.use('/api/v1/tasks', taskRoutes);
 
-// --- 4. Manejo Global de Errores ---
-app.use((err, req, res, next) => {
-    console.error(`[ERROR]: ${err.message}`);
-    if (err.message === 'NOT_FOUND') {
-        return res.status(404).json({ error: "Recurso no encontrado." });
-    }
-    res.status(500).json({ 
-        error: "Error interno del servidor. Protocolo de emergencia activo." 
-    });
-});
-
-// Exportamos la app para que Vercel la gestione correctamente
+// --- 4. EXPORTACIÓN PARA VERCEL (CRÍTICO) ---
+// En la nube, Vercel no usa app.listen, usa este export
 module.exports = app; 
 
-app.listen(port, () => {
-    console.log(`[SISTEMA]: Servidor operativo en el puerto ${port}`);
-});
+// Solo encendemos el puerto si estamos en local
+if (process.env.NODE_ENV !== 'production') {
+    app.listen(port || 3000, () => {
+        console.log(`[SISTEMA]: Servidor en puerto ${port || 3000}`);
+    });
+}
