@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const path = require('path'); // Sensor de rutas absolutas
 const { port } = require('./config/env');
 const taskRoutes = require('./routes/task.routes');
 const swaggerUi = require('swagger-ui-express');
@@ -7,7 +8,7 @@ const swaggerJsdoc = require('swagger-jsdoc');
 
 const app = express();
 
-// --- 1. Configuración de Swagger (Metadatos) ---
+// --- 1. Configuración de Swagger (Protocolo de Red) ---
 const swaggerOptions = {
     definition: {
         openapi: '3.0.0',
@@ -17,12 +18,12 @@ const swaggerOptions = {
             description: 'Documentación técnica de la API de gestión de misiones.',
         },
         servers: [
-            { url: `http://localhost:${port}`, description: 'Servidor Local' },
+            { url: 'http://localhost:3000', description: 'Servidor Local' },
             { url: 'https://taskflow-gremio.vercel.app', description: 'Servidor Producción' }
         ],
     },
-    // Ajuste de ruta: Busca en la carpeta de rutas relativa a la ejecución
-    apis: ['./server/src/routes/*.js', './src/routes/*.js'], 
+    // Usamos path.join para evitar que Vercel pierda el rastro de los archivos
+    apis: [path.join(__dirname, './routes/*.js')], 
 };
 
 const swaggerDocs = swaggerJsdoc(swaggerOptions);
@@ -31,7 +32,7 @@ const swaggerDocs = swaggerJsdoc(swaggerOptions);
 app.use(cors());
 app.use(express.json());
 
-// Middleware de Auditoría (Logger)
+// Middleware de Auditoría
 app.use((req, res, next) => {
     const inicio = performance.now();
     res.on('finish', () => { 
@@ -41,7 +42,7 @@ app.use((req, res, next) => {
     next();
 });
 
-// --- 3. Puntos de Entrada (Endpoints) ---
+// --- 3. Puntos de Entrada ---
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 app.use('/api/v1/tasks', taskRoutes);
 
@@ -56,7 +57,9 @@ app.use((err, req, res, next) => {
     });
 });
 
+// Exportamos la app para que Vercel la gestione correctamente
+module.exports = app; 
+
 app.listen(port, () => {
     console.log(`[SISTEMA]: Servidor operativo en el puerto ${port}`);
-    console.log(`[SISTEMA]: Documentación disponible en http://localhost:${port}/api-docs`);
 });
