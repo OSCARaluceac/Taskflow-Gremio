@@ -3,8 +3,6 @@ console.log("[SEÑAL DE VIDA]: VERCEL ESTÁ LEYENDO EL CÓDIGO NUEVO");
 console.log("==================================================");
 
 const express = require('express');
-
-const express = require('express');
 const cors = require('cors');
 const taskRoutes = require('./routes/task.routes');
 const swaggerUi = require('swagger-ui-express');
@@ -53,8 +51,6 @@ app.use((err, req, res, next) => {
 module.exports = app;
 
 // --- 6. ARRANQUE LOCAL AISLADO ---
-// Esta condición asegura que app.listen SOLO se ejecute en tu PC
-// y sea completamente ignorado por Vercel.
 if (require.main === module) {
     const PORT = process.env.PORT || 3000;
     app.listen(PORT, () => {
