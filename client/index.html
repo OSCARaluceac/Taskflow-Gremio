@@ -1,58 +1,242 @@
-const express = require('express');
-const cors = require('cors');
-const { port } = require('./config/env');
-const taskRoutes = require('./routes/task.routes');
-const swaggerUi = require('swagger-ui-express');
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TaskFlow // Gremio</title>
 
-const app = express();
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Lora:ital,wght@0,400..700;1,400..700&display=swap" rel="stylesheet">
 
-// --- 1. CONFIGURACIÓN DE SWAGGER (En JavaScript Puro) ---
-const swaggerDocument = {
-  openapi: '3.0.0',
-  info: { title: 'TaskFlow API - Gremio de Aventureros', version: '1.0.0' },
-  servers: [
-    { url: 'https://taskflow-gremio.vercel.app', description: 'Producción' },
-    { url: 'http://localhost:3000', description: 'Local' }
-  ],
-  paths: {
-    '/api/v1/tasks': {
-      get: { summary: 'Obtener todas las misiones', responses: { '200': { description: 'Éxito' } } },
-      post: { summary: 'Crear misión', responses: { '201': { description: 'Creada' } } }
-    },
-    '/api/v1/tasks/{id}': {
-      patch: { 
-        summary: 'Completar misión', 
-        parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'string' } }],
-        responses: { '200': { description: 'Actualizada' } } 
-      },
-      delete: { 
-        summary: 'Eliminar misión', 
-        parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'string' } }],
-        responses: { '204': { description: 'Eliminada' } } 
-      }
-    }
-  }
-};
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        wood: '#5d4037',
+                        gold: '#c5a028',
+                        parchment: {
+                            light: '#fdf6e3',
+                            dark: '#121212',
+                            DEFAULT: '#fafaf0'
+                        }
+                    },
+                    fontFamily: {
+                        pixel: ['"Press Start 2P"', 'cursive'],
+                        serif: ['Lora', 'serif'],
+                    }
+                }
+            }
+        }
+    </script>
 
-// --- 2. MIDDLEWARES GLOBALES ---
-app.use(cors());
-app.use(express.json());
+    <style>
+        body { image-rendering: pixelated; }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #fafaf0; }
+        ::-webkit-scrollbar-thumb { background: #5d4037; }
+        .dark ::-webkit-scrollbar-track { background: #121212; }
+        .dark ::-webkit-scrollbar-thumb { background: #c5a028; }
 
-// --- 3. RUTAS Y DOCUMENTACIÓN ---
-// Ya no usamos swaggerJsdoc. Pasamos el documento directamente.
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
-app.use('/api/v1/tasks', taskRoutes);
+        .boton-rango-s {
+            animation: brilloDorado 2.5s ease-in-out infinite;
+            background: linear-gradient(120deg, #f6e27a, #c5a028, #f6e27a);
+            background-size: 200% 200%;
+        }
+        @keyframes brilloDorado {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
 
-// --- 4. MANEJO DE ERRORES ---
-app.use((err, req, res, next) => {
-    console.error(`[ERROR]: ${err.message}`);
-    if (err.message === 'NOT_FOUND') return res.status(404).json({ error: "No encontrado." });
-    res.status(500).json({ error: "Error interno." });
-});
+        /* Modal edición */
+        #modal-edicion { transition: opacity 0.2s ease, transform 0.2s ease; }
+        .modal-oculto { display: none !important; }
+        .modal-visible { display: flex !important; }
 
-// --- 5. EXPORTACIÓN VERCEL ---
-module.exports = app;
+        /* Botones de acción compactos en móvil */
+        @media (max-width: 1023px) {
+            .btn-accion { padding: 0.4rem 0.5rem; font-size: 10px; min-width: 2rem; }
+            .card-mision { flex-direction: column; align-items: flex-start; gap: 0.5rem; }
+            .card-mision-acciones { width: 100%; display: flex; justify-content: flex-end; gap: 0.4rem; padding-top: 0.5rem; border-top: 1px solid rgba(197,160,40,0.15); margin-left: 0 !important; }
+        }
 
-if (process.env.NODE_ENV !== 'production') {
-    app.listen(port || 3000, () => console.log(`[SISTEMA]: Servidor en puerto ${port || 3000}`));
-}
+        /* Spinner personalizado estilo Gremio */
+        .loader-gremio {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #c5a028;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-parchment-light dark:bg-zinc-950 text-stone-800 dark:text-stone-200 font-serif transition-colors duration-500 min-h-screen px-4 py-6 2xl:py-10 flex justify-center items-start">
+
+    <div id="loading-state" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm flex flex-col items-center justify-center z-[100]">
+        <div class="loader-gremio mb-4"></div>
+        <p class="font-pixel text-[10px] text-gold animate-pulse uppercase">Consultando al Gremio...</p>
+    </div>
+
+    <div id="error-message" class="hidden fixed bottom-10 left-1/2 -translate-x-1/2 z-[100] w-full max-w-md px-4">
+        <div class="bg-red-900 border-2 border-red-500 p-4 shadow-2xl flex items-center gap-4">
+            <span class="text-2xl">⚠️</span>
+            <div>
+                <h4 class="font-pixel text-[9px] text-red-200 uppercase mb-1">Fallo en la Red</h4>
+                <p id="error-text" class="text-xs text-red-100"></p>
+            </div>
+        </div>
+    </div>
+
+    <div class="w-full max-w-5xl 2xl:max-w-[1200px] border-4 border-wood dark:border-stone-800 bg-parchment dark:bg-zinc-900 shadow-2xl relative transition-all duration-500 ring-1 ring-wood/20 dark:ring-stone-700/40 ring-offset-2 ring-offset-parchment-light dark:ring-offset-zinc-950">
+        
+        <header class="border-b-2 border-gold/30 p-6 flex justify-between items-center bg-white/40 dark:bg-black/20">
+            <h1 class="font-pixel text-[10px] md:text-xs text-wood dark:text-gold tracking-widest uppercase">TaskFlow // Gremio</h1>
+            <div class="flex items-center gap-3">
+                <!-- Botón Drawer: solo en móvil -->
+                <button id="btn-drawer" class="lg:hidden px-3 py-2 border-2 border-wood dark:border-gold hover:bg-gold/10 transition-all font-pixel text-[9px] text-wood dark:text-gold outline-none active:scale-95">
+                    ☰ FILTROS
+                </button>
+                <button id="theme-toggle" class="px-4 py-2 border-2 border-wood dark:border-gold hover:bg-gold hover:text-white dark:hover:bg-gold dark:hover:text-black transition-all duration-300 font-pixel text-[9px] hover:scale-105 active:scale-95 shadow-sm outline-none">
+                    CAMBIAR MODO
+                </button>
+            </div>
+        </header>
+
+        <!-- Overlay oscuro para cerrar el drawer tocando fuera -->
+        <div id="drawer-overlay" class="fixed inset-0 bg-black/50 z-40 hidden lg:hidden backdrop-blur-sm transition-opacity duration-300"></div>
+
+        <main class="grid grid-cols-1 lg:grid-cols-[1fr_1.618fr] min-h-[80vh]">
+            <!-- ASIDE: drawer en móvil, sidebar normal en lg+ -->
+            <aside id="filtros-drawer"
+                class="fixed top-0 left-0 h-full w-72 z-50 overflow-y-auto
+                       bg-parchment dark:bg-zinc-900 border-r-4 border-wood dark:border-stone-700
+                       p-8 shadow-2xl
+                       transform -translate-x-full transition-transform duration-300 ease-in-out
+                       lg:relative lg:top-auto lg:left-auto lg:h-auto lg:w-auto lg:z-auto
+                       lg:translate-x-0 lg:shadow-none lg:border-r lg:border-stone-200 lg:dark:border-stone-800
+                       lg:bg-stone-50/30 lg:dark:bg-black/10 lg:overflow-y-visible">
+                <section class="mb-10 p-4 border border-gold/20 bg-gold/5 rounded-sm">
+                    <h3 class="font-pixel text-[9px] text-gold mb-4 uppercase">Estado del Gremio</h3>
+                    <div id="stats-container" class="font-pixel text-[8px] space-y-3 text-stone-600 dark:text-stone-400"></div>
+                </section>
+
+                <section class="mb-10">
+                    <h3 class="font-pixel text-[9px] text-stone-500 mb-4 uppercase">Buscador</h3>
+                    <input type="text" id="filtro-texto" placeholder="Buscar encargo..." 
+                        class="w-full p-3 bg-white dark:bg-zinc-800 border border-stone-400 dark:border-stone-700 focus:ring-2 focus:ring-gold outline-none transition-all shadow-sm">
+                </section>
+
+                <section class="mb-10">
+                    <h3 class="font-pixel text-[9px] text-stone-500 mb-4 uppercase">Filtrar por Estado</h3>
+                    <select id="filtro-estado" class="w-full p-2 bg-white dark:bg-zinc-800 border border-stone-400 dark:border-stone-700 font-pixel text-[8px] outline-none cursor-pointer">
+                        <option value="todas">TODAS</option>
+                        <option value="pendientes">PENDIENTES</option>
+                        <option value="completadas">LOGRADAS</option>
+                    </select>
+                </section>
+
+                <section class="mb-10">
+                    <h3 class="font-pixel text-[9px] text-stone-500 mb-4 uppercase">Rangos</h3>
+                    <div id="filtro-rangos" class="flex flex-wrap gap-2"></div>
+                </section>
+
+                <section>
+                    <h3 class="font-pixel text-[9px] text-stone-500 mb-4 uppercase">Categorías</h3>
+                    <div id="filtro-categorias" class="flex flex-col gap-2"></div>
+                </section>
+
+                <!-- Botón Misiones de Élite -->
+                <section class="mt-10 pt-6 border-t-2 border-gold/30">
+                    <button id="btn-elite" 
+                        class="w-full p-4 border-2 border-gold bg-gold/5 dark:bg-gold/10
+                               font-pixel text-[8px] text-gold uppercase tracking-wider
+                               hover:bg-gold hover:text-white dark:hover:text-black
+                               active:scale-95 transition-all duration-300 shadow-md
+                               relative overflow-hidden group">
+                        <span class="relative z-10">⚔ Explorar Misiones </span>
+                        <span class="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent
+                                     translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></span>
+                    </button>
+                    <p class="font-pixel text-[7px] text-stone-400 dark:text-stone-600 mt-2 text-center leading-relaxed">
+                        ENCARGOS OFICIALES DEL GREMIO
+                    </p>
+                </section>
+
+            </aside>
+
+            <section class="p-8 bg-white/50 dark:bg-zinc-900/30">
+                <form id="form-mision" class="p-6 bg-stone-100 dark:bg-zinc-800 border border-stone-200 dark:border-stone-700 mb-10 shadow-inner rounded-sm">
+                    <div class="mb-4">
+                        <input type="text" id="input-mision" placeholder="Título de la misión..." required 
+                            class="w-full p-4 bg-white dark:bg-zinc-900 border border-stone-400 dark:border-stone-700 focus:ring-2 focus:ring-gold outline-none font-bold text-lg">
+                    </div>
+                    <div class="flex flex-wrap gap-3">
+                        <select id="select-categoria" class="flex-1 p-2 bg-white dark:bg-zinc-900 border border-stone-400 dark:border-stone-700 outline-none">
+                            <option>Recolección</option><option>Exploración</option><option>Captura</option><option>Escolta</option><option>Caza</option>
+                        </select>
+                        <select id="select-rango" class="p-2 bg-white dark:bg-zinc-900 border border-stone-400 dark:border-stone-700 outline-none">
+                            <option>D</option><option>C</option><option>B</option><option>A</option><option>S</option>
+                        </select>
+                        <button type="submit" class="bg-gold text-white px-8 py-2 font-pixel text-[10px] hover:scale-105 active:scale-95 transition-all shadow-md">
+                            PUBLICAR
+                        </button>
+                    </div>
+                    <button type="button" id="btn-ordenar" onclick="window.ordenarPorPrioridad(this)" 
+                        class="w-full mt-4 p-2 border-2 border-gold text-gold font-pixel text-[8px] 
+                               hover:bg-gold/10 transition-all duration-200 shadow-md outline-none">
+                        ORDENAR POR PRIORIDAD (S-D)
+                    </button>
+                </form>
+
+                <div class="flex justify-end mb-4">
+                    <button id="btn-eliminar-todo"
+                        class="px-4 py-2 border-2 border-red-500/50 text-red-500 font-pixel text-[8px] uppercase
+                               hover:bg-red-500 hover:text-white active:scale-95 transition-all duration-200 shadow-sm
+                               opacity-60 hover:opacity-100">
+                        ✕ Limpiar Tablón
+                    </button>
+                </div>
+                <div id="lista-misiones" class="space-y-4"></div>
+            </section>
+        </main>
+    </div>
+
+    <!-- MODAL EDICIÓN -->
+    <div id="modal-edicion" class="modal-oculto fixed inset-0 bg-black/60 backdrop-blur-sm items-center justify-center z-[200] px-4">
+        <div class="w-full max-w-md bg-parchment dark:bg-zinc-900 border-4 border-wood dark:border-stone-700 shadow-2xl p-6 relative">
+            <h2 class="font-pixel text-[9px] text-gold uppercase mb-6 tracking-widest">✎ Modificar Encargo</h2>
+            <div class="mb-4">
+                <input type="text" id="modal-input-titulo"
+                    class="w-full p-3 bg-white dark:bg-zinc-800 border border-stone-400 dark:border-stone-700 focus:ring-2 focus:ring-gold outline-none font-bold text-base">
+            </div>
+            <div class="flex flex-wrap gap-3 mb-6">
+                <select id="modal-select-categoria" class="flex-1 p-2 bg-white dark:bg-zinc-800 border border-stone-400 dark:border-stone-700 outline-none font-serif text-sm">
+                    <option>Recolección</option><option>Exploración</option><option>Captura</option><option>Escolta</option><option>Caza</option>
+                </select>
+                <select id="modal-select-rango" class="p-2 bg-white dark:bg-zinc-800 border border-stone-400 dark:border-stone-700 outline-none font-pixel text-[9px]">
+                    <option>D</option><option>C</option><option>B</option><option>A</option><option>S</option>
+                </select>
+            </div>
+            <div class="flex gap-3">
+                <button id="modal-btn-guardar"
+                    class="flex-1 py-3 bg-gold text-white font-pixel text-[9px] uppercase hover:scale-105 active:scale-95 transition-all shadow-md">
+                    ✓ Guardar
+                </button>
+                <button id="modal-btn-cancelar"
+                    class="px-6 py-3 border-2 border-stone-400 dark:border-stone-600 text-stone-500 font-pixel text-[9px] uppercase hover:bg-stone-100 dark:hover:bg-zinc-800 active:scale-95 transition-all">
+                    Cancelar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="app.js"></script>
+</body>
+</html>
