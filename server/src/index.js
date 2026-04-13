@@ -6,7 +6,7 @@ const swaggerUi = require('swagger-ui-express');
 
 const app = express();
 
-// --- 1. CONFIGURACIÓN DE SWAGGER (En JavaScript Puro) ---
+// --- 1. CONFIGURACIÓN DE SWAGGER (JSON Puro) ---
 const swaggerDocument = {
   openapi: '3.0.0',
   info: { title: 'TaskFlow API - Gremio de Aventureros', version: '1.0.0' },
@@ -16,7 +16,7 @@ const swaggerDocument = {
   ],
   paths: {
     '/api/v1/tasks': {
-      get: { summary: 'Obtener todas las misiones', responses: { '200': { description: 'Éxito' } } },
+      get: { summary: 'Obtener misiones', responses: { '200': { description: 'Éxito' } } },
       post: { summary: 'Crear misión', responses: { '201': { description: 'Creada' } } }
     },
     '/api/v1/tasks/{id}': {
@@ -38,9 +38,17 @@ const swaggerDocument = {
 app.use(cors());
 app.use(express.json());
 
-// --- 3. RUTAS Y DOCUMENTACIÓN ---
-// Ya no usamos swaggerJsdoc. Pasamos el documento directamente.
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+// --- 3. RUTAS Y DOCUMENTACIÓN (Bypass CDN para Vercel) ---
+// 🔥 Esta es la clave: obligamos a Swagger a usar archivos externos, no los de Vercel.
+const swaggerHtmlOptions = {
+    customCssUrl: 'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/4.18.3/swagger-ui.min.css',
+    customJs: [
+        'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/4.18.3/swagger-ui-bundle.js',
+        'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/4.18.3/swagger-ui-standalone-preset.js'
+    ]
+};
+
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument, swaggerHtmlOptions));
 app.use('/api/v1/tasks', taskRoutes);
 
 // --- 4. MANEJO DE ERRORES ---
