@@ -1,3 +1,9 @@
+console.log("==================================================");
+console.log("[SEÑAL DE VIDA]: VERCEL ESTÁ LEYENDO EL CÓDIGO NUEVO");
+console.log("==================================================");
+
+const express = require('express');
+
 const express = require('express');
 const cors = require('cors');
 const taskRoutes = require('./routes/task.routes');
