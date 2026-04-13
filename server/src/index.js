@@ -1,78 +1,22 @@
 const express = require('express');
 const cors = require('cors');
-const { port } = require('./config/env');
 const taskRoutes = require('./routes/task.routes');
 const swaggerUi = require('swagger-ui-express');
 
 const app = express();
 
-// --- 1. CONFIGURACIÓN DE SWAGGER (Exhaustiva) ---
+// --- 1. CONFIGURACIÓN DE SWAGGER ---
 const swaggerDocument = {
   openapi: '3.0.0',
-  info: { 
-    title: 'TaskFlow API - Gremio de Aventureros', 
-    version: '1.0.0',
-    description: 'Documentación técnica exhaustiva de la API de gestión de misiones. Incluye contratos de red, esquemas de datos y manejo de excepciones (Fase 3).'
-  },
+  info: { title: 'TaskFlow API - Gremio de Aventureros', version: '1.0.0' },
   servers: [
-    { url: 'https://taskflow-gremio.vercel.app', description: 'Servidor de Producción (Vercel)' },
-    { url: 'http://localhost:3000', description: 'Servidor Local' }
+    { url: 'https://taskflow-gremio.vercel.app', description: 'Vercel' },
+    { url: 'http://localhost:3000', description: 'Local' }
   ],
-  components: {
-    schemas: {
-      Task: {
-        type: 'object',
-        required: ['title', 'categoria', 'rango'],
-        properties: {
-          id: { type: 'string', description: 'ID autogenerado único.' },
-          title: { type: 'string', description: 'Nombre del encargo (Mín. 3 caracteres).' },
-          categoria: { type: 'string', description: 'Tipo de misión.' },
-          rango: { type: 'string', description: 'Dificultad (S, A, B, C, D).' },
-          completed: { type: 'boolean', description: 'Estado actual.' }
-        }
-      },
-      Error: {
-        type: 'object',
-        properties: {
-          error: { type: 'string', description: 'Mensaje del fallo del sistema.' }
-        }
-      }
-    }
-  },
   paths: {
     '/api/v1/tasks': {
-      get: { 
-        summary: 'Obtener misiones', 
-        responses: { '200': { description: 'Éxito.', content: { 'application/json': { schema: { type: 'array', items: { $ref: '#/components/schemas/Task' } } } } } } 
-      },
-      post: { 
-        summary: 'Registrar misión', 
-        requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/Task' } } } },
-        responses: { 
-          '201': { description: 'Creada.', content: { 'application/json': { schema: { $ref: '#/components/schemas/Task' } } } },
-          '400': { description: 'Datos inválidos.', content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } } }
-        } 
-      }
-    },
-    '/api/v1/tasks/{id}': {
-      patch: { 
-        summary: 'Actualizar estado', 
-        parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'string' } }],
-        requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', properties: { completed: { type: 'boolean' } } } } } },
-        responses: { 
-          '200': { description: 'Actualizada.', content: { 'application/json': { schema: { $ref: '#/components/schemas/Task' } } } },
-          '400': { description: 'Fallo de validación.', content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } } },
-          '404': { description: 'No encontrada.', content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } } }
-        } 
-      },
-      delete: { 
-        summary: 'Eliminar misión', 
-        parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'string' } }],
-        responses: { 
-          '204': { description: 'Eliminada.' },
-          '404': { description: 'No encontrada.', content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } } }
-        } 
-      }
+      get: { summary: 'Obtener misiones', responses: { '200': { description: 'Éxito' } } },
+      post: { summary: 'Crear misión', responses: { '201': { description: 'Creada' } } }
     }
   }
 };
@@ -96,13 +40,18 @@ app.use('/api/v1/tasks', taskRoutes);
 // --- 4. MANEJO DE ERRORES ---
 app.use((err, req, res, next) => {
     console.error(`[ERROR]: ${err.message}`);
-    if (err.message === 'NOT_FOUND') return res.status(404).json({ error: "No encontrado." });
-    res.status(500).json({ error: "Error interno." });
+    res.status(500).json({ error: "Error interno del servidor." });
 });
 
-// --- 5. EXPORTACIÓN VERCEL (CRÍTICO) ---
+// --- 5. EXPORTACIÓN OBLIGATORIA PARA VERCEL ---
 module.exports = app;
 
-if (process.env.NODE_ENV !== 'production') {
-    app.listen(port || 3000, () => console.log(`[SISTEMA]: Servidor en puerto ${port || 3000}`));
+// --- 6. ARRANQUE LOCAL AISLADO ---
+// Esta condición asegura que app.listen SOLO se ejecute en tu PC
+// y sea completamente ignorado por Vercel.
+if (require.main === module) {
+    const PORT = process.env.PORT || 3000;
+    app.listen(PORT, () => {
+        console.log(`[SISTEMA]: Servidor operativo en el puerto ${PORT}`);
+    });
 }
