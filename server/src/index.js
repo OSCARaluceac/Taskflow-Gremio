@@ -1,4 +1,12 @@
-// --- 1. CONFIGURACIÓN DE SWAGGER (Documentación Exhaustiva) ---
+const express = require('express');
+const cors = require('cors');
+const { port } = require('./config/env');
+const taskRoutes = require('./routes/task.routes');
+const swaggerUi = require('swagger-ui-express');
+
+const app = express();
+
+// --- 1. CONFIGURACIÓN DE SWAGGER (Exhaustiva) ---
 const swaggerDocument = {
   openapi: '3.0.0',
   info: { 
@@ -8,7 +16,7 @@ const swaggerDocument = {
   },
   servers: [
     { url: 'https://taskflow-gremio.vercel.app', description: 'Servidor de Producción (Vercel)' },
-    { url: 'http://localhost:3000', description: 'Servidor Local (Desarrollo)' }
+    { url: 'http://localhost:3000', description: 'Servidor Local' }
   ],
   components: {
     schemas: {
@@ -16,17 +24,17 @@ const swaggerDocument = {
         type: 'object',
         required: ['title', 'categoria', 'rango'],
         properties: {
-          id: { type: 'string', description: 'ID autogenerado único de la misión.' },
-          title: { type: 'string', description: 'Nombre del encargo (Mínimo 3 caracteres).' },
-          categoria: { type: 'string', description: 'Tipo de misión (ej. Caza, Escolta).' },
-          rango: { type: 'string', description: 'Rango de dificultad (S, A, B, C, D).' },
-          completed: { type: 'boolean', description: 'Estado actual de la misión.' }
+          id: { type: 'string', description: 'ID autogenerado único.' },
+          title: { type: 'string', description: 'Nombre del encargo (Mín. 3 caracteres).' },
+          categoria: { type: 'string', description: 'Tipo de misión.' },
+          rango: { type: 'string', description: 'Dificultad (S, A, B, C, D).' },
+          completed: { type: 'boolean', description: 'Estado actual.' }
         }
       },
       Error: {
         type: 'object',
         properties: {
-          error: { type: 'string', description: 'Mensaje detallado del fallo del sistema.' }
+          error: { type: 'string', description: 'Mensaje del fallo del sistema.' }
         }
       }
     }
@@ -34,60 +42,67 @@ const swaggerDocument = {
   paths: {
     '/api/v1/tasks': {
       get: { 
-        summary: 'Sincronizar el Tablón de Misiones', 
-        description: 'Obtiene la lista completa de todas las misiones registradas en la memoria del servidor.',
-        responses: { 
-          '200': { 
-            description: 'Lista de misiones recuperada con éxito.',
-            content: { 'application/json': { schema: { type: 'array', items: { $ref: '#/components/schemas/Task' } } } }
-          } 
-        } 
+        summary: 'Obtener misiones', 
+        responses: { '200': { description: 'Éxito.', content: { 'application/json': { schema: { type: 'array', items: { $ref: '#/components/schemas/Task' } } } } } } 
       },
       post: { 
-        summary: 'Registrar un Nuevo Contrato', 
-        description: 'Añade una nueva misión al servidor. Frontera de red: Fallará si los datos no cumplen los requisitos estrictos.',
-        requestBody: {
-          required: true,
-          content: { 'application/json': { schema: { $ref: '#/components/schemas/Task' } } }
-        },
+        summary: 'Registrar misión', 
+        requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/Task' } } } },
         responses: { 
-          '201': { 
-            description: 'Misión creada y registrada en el sistema.',
-            content: { 'application/json': { schema: { $ref: '#/components/schemas/Task' } } }
-          },
-          '400': { 
-            description: 'Datos inválidos (Bad Request). Ej: Falta título, o es muy corto.',
-            content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } }
-          }
+          '201': { description: 'Creada.', content: { 'application/json': { schema: { $ref: '#/components/schemas/Task' } } } },
+          '400': { description: 'Datos inválidos.', content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } } }
         } 
       }
     },
     '/api/v1/tasks/{id}': {
       patch: { 
-        summary: 'Actualizar Estado de Misión', 
-        description: 'Aplica una mutación granular (PATCH) para marcar una misión como completada o pendiente.',
-        parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'string' }, description: 'ID de la misión a modificar.' }],
-        requestBody: {
-          required: true,
-          content: { 'application/json': { schema: { type: 'object', properties: { completed: { type: 'boolean' } } } } }
-        },
+        summary: 'Actualizar estado', 
+        parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'string' } }],
+        requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', properties: { completed: { type: 'boolean' } } } } } },
         responses: { 
-          '200': { description: 'Estado actualizado correctamente.', content: { 'application/json': { schema: { $ref: '#/components/schemas/Task' } } } },
-          '400': { description: 'Validación fallida: El valor enviado no es un booleano válido.', content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } } },
-          '404': { description: 'El ID proporcionado no coincide con ninguna misión activa (Not Found).', content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } } },
-          '500': { description: 'Fallo interno crítico del servidor.' }
+          '200': { description: 'Actualizada.', content: { 'application/json': { schema: { $ref: '#/components/schemas/Task' } } } },
+          '400': { description: 'Fallo de validación.', content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } } },
+          '404': { description: 'No encontrada.', content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } } }
         } 
       },
       delete: { 
-        summary: 'Eliminar Registro de Misión', 
-        description: 'Borra permanentemente una misión de los archivos del gremio. Idempotente.',
-        parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'string' }, description: 'ID único de la misión.' }],
+        summary: 'Eliminar misión', 
+        parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'string' } }],
         responses: { 
-          '204': { description: 'Operación exitosa. Misión eliminada (No Content).' },
-          '404': { description: 'La misión que intentas eliminar ya no existe en la base de datos.', content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } } }
+          '204': { description: 'Eliminada.' },
+          '404': { description: 'No encontrada.', content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } } }
         } 
       }
     }
   }
 };
-// --- FIN DE LA CONFIGURACIÓN DE SWAGGER ---
+
+// --- 2. MIDDLEWARES GLOBALES ---
+app.use(cors());
+app.use(express.json());
+
+// --- 3. RUTAS Y DOCUMENTACIÓN (Bypass CDN) ---
+const swaggerHtmlOptions = {
+    customCssUrl: 'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/4.18.3/swagger-ui.min.css',
+    customJs: [
+        'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/4.18.3/swagger-ui-bundle.js',
+        'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/4.18.3/swagger-ui-standalone-preset.js'
+    ]
+};
+
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument, swaggerHtmlOptions));
+app.use('/api/v1/tasks', taskRoutes);
+
+// --- 4. MANEJO DE ERRORES ---
+app.use((err, req, res, next) => {
+    console.error(`[ERROR]: ${err.message}`);
+    if (err.message === 'NOT_FOUND') return res.status(404).json({ error: "No encontrado." });
+    res.status(500).json({ error: "Error interno." });
+});
+
+// --- 5. EXPORTACIÓN VERCEL (CRÍTICO) ---
+module.exports = app;
+
+if (process.env.NODE_ENV !== 'production') {
+    app.listen(port || 3000, () => console.log(`[SISTEMA]: Servidor en puerto ${port || 3000}`));
+}
